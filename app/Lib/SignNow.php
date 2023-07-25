@@ -30,7 +30,9 @@ class SignNow {
         $client_id = config('sign-now.client-id');
         $redirect_url = urlencode(route('sign-now-handle-auth-code'));
 
-        return "https://app.signnow.com/webapp/static/grant-permission?client_id={$client_id}&redirect_uri={$redirect_url}&response_type=code";
+        $state = microtime();
+
+        return "https://app.signnow.com/authorize?client_id={$client_id}&redirect_uri={$redirect_url}&response_type=code&state={$state}";
     }
 
     private function genUrl(string $path) {
@@ -70,6 +72,24 @@ class SignNow {
             'sign-now.bearer-token' => $access_token,
             'sign-now.refresh-token' => $refresh_token,
         ]);
+    }
+
+    public function getFolders() {
+        return $this->http->get(
+            $this->genUrl("/user/folder")
+        );
+    }
+
+    public function uploadDocument($file) {
+        return $this->http->attach('file', $file->get(), $file->getClientOriginalName())->post(
+            $this->genUrl("/document")
+        );
+    }
+
+    public function getDocuments($folder_id) {
+        return $this->http->get(
+            $this->genUrl("/folder/{$folder_id}")
+        );
     }
 
     public function getDocument($documentId) {
